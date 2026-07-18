@@ -28,6 +28,89 @@
             <Setter Property="FontFamily" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontFamilyKey}}" />
             <Setter Property="FontSize" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontSizeKey}}" />
         </Style>
+
+        <Style x:Key="SendIconButtonStyle"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource ChatButtonStyle}">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="UseLayoutRounding" Value="True" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonInactiveBrushKey}}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonInactiveBorderBrushKey}}" />
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonInactiveGlyphBrushKey}}" />
+            <Setter Property="BorderThickness" Value="1.25" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Button}">
+                        <Grid SnapsToDevicePixels="True">
+                            <Border x:Name="OuterShadowHost"
+                                    CornerRadius="17"
+                                    Background="Transparent">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="#2A000000"
+                                                      BlurRadius="6"
+                                                      ShadowDepth="1"
+                                                      Direction="270"
+                                                      Opacity="1" />
+                                </Border.Effect>
+                            </Border>
+
+                            <Border x:Name="Root"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="17">
+                                <Grid>
+                                    <Border x:Name="InnerRing"
+                                            Margin="1"
+                                            CornerRadius="16"
+                                            BorderThickness="1"
+                                            BorderBrush="#18FFFFFF" />
+
+                                    <Viewbox Width="14" Height="14" Stretch="Uniform"
+                                             HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Path x:Name="SendGlyph"
+                                              Data="M8,2 L8,13 M8,2 L4.5,5.5 M8,2 L11.5,5.5"
+                                              Stroke="{TemplateBinding Foreground}"
+                                              StrokeThickness="1.35"
+                                              StrokeStartLineCap="Round"
+                                              StrokeEndLineCap="Round"
+                                              StrokeLineJoin="Round"
+                                              SnapsToDevicePixels="True" />
+                                    </Viewbox>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonHoverActiveBrushKey}}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonHoverActiveBorderBrushKey}}" />
+                                <Setter TargetName="SendGlyph" Property="Stroke" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonHoverActiveGlyphBrushKey}}" />
+                                <Setter TargetName="OuterShadowHost" Property="Opacity" Value="0.9" />
+                            </Trigger>
+
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Root" Property="Background" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonDownBrushKey}}" />
+                                <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonDownBorderBrushKey}}" />
+                                <Setter TargetName="SendGlyph" Property="Stroke" Value="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowButtonDownActiveGlyphBrushKey}}" />
+                                <Setter TargetName="SendGlyph" Property="Margin" Value="0,1,0,0" />
+                                <Setter TargetName="InnerRing" Property="Opacity" Value="0.35" />
+                                <Setter TargetName="OuterShadowHost" Property="Opacity" Value="0.5" />
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Root" Property="Opacity" Value="0.55" />
+                                <Setter TargetName="OuterShadowHost" Property="Opacity" Value="0.15" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="12"
@@ -129,10 +212,8 @@
 
                 <Button x:Name="AskButton"
                         Grid.Column="1"
-                        Style="{StaticResource ChatButtonStyle}"
-                        Content="发送"
-                        MinWidth="72"
-                        Height="32"
+                        Style="{StaticResource SendIconButtonStyle}"
+                        ToolTip="发送 (Enter)"
                         Margin="8,0,0,0"
                         VerticalAlignment="Bottom"
                         Click="AskButton_Click" />
