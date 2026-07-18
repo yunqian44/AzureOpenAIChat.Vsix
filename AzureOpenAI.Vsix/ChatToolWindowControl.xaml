@@ -1,0 +1,113 @@
+﻿<UserControl x:Class="AzureOpenAI.Vsix.ChatToolWindowControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:platformUI="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+             mc:Ignorable="d"
+             d:DesignHeight="520"
+             d:DesignWidth="760"
+             Background="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBackgroundBrushKey}}"
+             Foreground="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowTextBrushKey}}"
+             FontFamily="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontFamilyKey}}"
+             FontSize="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontSizeKey}}">
+
+    <UserControl.Resources>
+        <Style x:Key="ChatTextBoxStyle"
+               TargetType="{x:Type TextBox}"
+               BasedOn="{StaticResource {x:Static vsshell:VsResourceKeys.TextBoxStyleKey}}">
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="FontFamily" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontFamilyKey}}" />
+            <Setter Property="FontSize" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontSizeKey}}" />
+        </Style>
+
+        <Style x:Key="ChatButtonStyle"
+               TargetType="{x:Type Button}"
+               BasedOn="{StaticResource {x:Static vsshell:VsResourceKeys.ButtonStyleKey}}">
+            <Setter Property="FontFamily" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontFamilyKey}}" />
+            <Setter Property="FontSize" Value="{DynamicResource {x:Static vsshell:VsFonts.EnvironmentFontSizeKey}}" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12"
+          Background="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBackgroundBrushKey}}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0"
+                       Text="Azure OpenAI Chat"
+                       FontWeight="Bold"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource {x:Static vsshell:VsResourceKeys.TextBlockEnvironment133PercentFontSizeStyleKey}}" />
+
+            <Button Grid.Column="1"
+                    x:Name="ReloadConfigButton"
+                    Style="{StaticResource ChatButtonStyle}"
+                    Content="重新加载配置"
+                    MinWidth="110"
+                    Height="28"
+                    Margin="8,0,0,0"
+                    Click="ReloadConfigButton_Click" />
+        </Grid>
+
+        <StackPanel Grid.Row="1" Orientation="Vertical" Margin="0,0,0,8">
+            <TextBlock x:Name="ConfigPathText"
+                       Text="Config: (未加载)"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,4" />
+            <TextBlock x:Name="StatusText"
+                       Text="状态：准备就绪"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                Padding="8"
+                BorderThickness="1"
+                BorderBrush="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBorderBrushKey}}"
+                Background="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBackgroundBrushKey}}">
+            <ScrollViewer x:Name="ChatScrollViewer"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+                <StackPanel x:Name="MessagesPanel" />
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="3" Margin="0,8,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox x:Name="QuestionTextBox"
+                     Grid.Column="0"
+                     Style="{StaticResource ChatTextBoxStyle}"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     MinHeight="56"
+                     MaxHeight="160"
+                     PreviewKeyDown="QuestionTextBox_PreviewKeyDown" />
+
+            <Button x:Name="AskButton"
+                    Grid.Column="1"
+                    Style="{StaticResource ChatButtonStyle}"
+                    Content="发送"
+                    MinWidth="72"
+                    Height="32"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Bottom"
+                    Click="AskButton_Click" />
+        </Grid>
+    </Grid>
+</UserControl>

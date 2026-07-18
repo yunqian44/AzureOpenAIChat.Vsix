@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <UseWPF>true</UseWPF>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <GeneratePkgDefFile>true</GeneratePkgDefFile>
+    <UseCodebase>true</UseCodebase>
+    <IncludeAssemblyInVSIXContainer>true</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>true</IncludeDebugSymbolsInVSIXContainer>
+    <CopyBuildOutputToOutputDirectory>true</CopyBuildOutputToOutputDirectory>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <DeployExtension>true</DeployExtension>
+    <NoWarn>$(NoWarn);VSSDK006;VSSDK008;VSTHRD100;VSTHRD110</NoWarn>
+    <FileManifest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)files.json</FileManifest>
+    <TemplateFileManifest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)templateFiles.json</TemplateFileManifest>
+    <ResourceManifest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)resources.json</ResourceManifest>
+    <CtoFileManifest>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)ctoFiles.json</CtoFileManifest>
+    <CtoCacheFile>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)mergeCto.cache</CtoCacheFile>
+    <CreateTemplateManifestsCacheFile>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)createTemplateManifests.cache</CreateTemplateManifestsCacheFile>
+    <CreatePkgDefAssemblyToProcess>$(MSBuildProjectDirectory)\bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).dll</CreatePkgDefAssemblyToProcess>
+    <TemplateOutputDirectory>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)</TemplateOutputDirectory>
+    <TargetVsixContainer>$(MSBuildProjectDirectory)\bin\$(Configuration)\AzureOpenAIChat.vsix</TargetVsixContainer>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net472" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Tomlyn" Version="0.20.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Design" />
+  </ItemGroup>
+  <ItemGroup>
+    <VSCTCompile Include="Menus.vsct">
+      <ResourceName>Menus.ctmenu</ResourceName>
+    </VSCTCompile>
+    <None Include="source.extension.vsixmanifest">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <Target Name="CreateVsixAfterBuild" AfterTargets="Build">
+    <CallTarget Targets="GeneratePkgDef;CreateVsixContainer" />
+  </Target>
+  <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets')" />
+  <ItemGroup>
+    <Content Include="obj\$(Configuration)\$(TargetFramework)\Menus.cto">
+      <TargetPath>Menus.ctmenu</TargetPath>
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>Menus.ctmenu</Link>
+    </Content>
+  </ItemGroup>
+</Project>

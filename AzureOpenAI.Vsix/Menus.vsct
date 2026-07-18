@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<CommandTable xmlns="http://schemas.microsoft.com/VisualStudio/2005-10-18/CommandTable">
+
+  <Extern href="stdidcmd.h" />
+  <Extern href="vsshlids.h" />
+
+  <Commands package="guidAzureOpenAIPackage">
+    <Groups>
+      <Group guid="guidAzureOpenAICommandSet" id="MyMenuGroup" priority="0x0600">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS" />
+      </Group>
+    </Groups>
+
+    <Buttons>
+      <Button guid="guidAzureOpenAICommandSet" id="cmdidOpenChatToolWindow" priority="0x0100" type="Button">
+        <Parent guid="guidAzureOpenAICommandSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Azure OpenAI Chat</ButtonText>
+        </Strings>
+      </Button>
+    </Buttons>
+  </Commands>
+
+  <Symbols>
+    <GuidSymbol name="guidAzureOpenAIPackage" value="{9a0df5cd-71f3-4b74-a8c1-9df90f5a483a}" />
+
+    <GuidSymbol name="guidAzureOpenAICommandSet" value="{3d379e9f-c233-46bd-92fd-b8efecf165f3}">
+      <IDSymbol name="MyMenuGroup" value="0x1020" />
+      <IDSymbol name="cmdidOpenChatToolWindow" value="0x0100" />
+    </GuidSymbol>
+  </Symbols>
+</CommandTable>

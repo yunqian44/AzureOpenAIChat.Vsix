@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="AzureOpenAI.Vsix.9a0df5cd71f34b74a8c19df90f5a483a" Version="1.6" Language="zh-CN" Publisher="LocalDev" />
+    <DisplayName>Azure OpenAI Chat for Visual Studio</DisplayName>
+    <Description xml:space="preserve">在 Visual Studio 内调用 Azure OpenAI，并从本地 config.toml 加载配置。</Description>
+    <MoreInfo>https://example.local/azure-openai-vsix</MoreInfo>
+    <Tags>Azure;OpenAI;AI;Chat;VSIX</Tags>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[18.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[18.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+    <InstallationTarget Id="Microsoft.VisualStudio.Enterprise" Version="[18.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName=".NET Framework" d:Source="Installed" Version="[4.7.2,)" />
+  </Dependencies>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[18.0,19.0)" DisplayName="Visual Studio core editor" />
+  </Prerequisites>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.VsPackage" Path="|AzureOpenAI.Vsix;PkgdefProjectOutputGroup|" d:Source="Project" d:ProjectName="AzureOpenAI.Vsix" />
+    <Asset Type="Microsoft.VisualStudio.Menus" Path="Menus.ctmenu" d:Source="File" />
+  </Assets>
+</PackageManifest>
+
+
