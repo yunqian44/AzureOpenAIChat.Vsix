@@ -83,31 +83,60 @@
             </ScrollViewer>
         </Border>
 
-        <Grid Grid.Row="3" Margin="0,8,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <StackPanel Grid.Row="3" Margin="0,8,0,0" Orientation="Vertical">
+            <Border x:Name="ImageAttachmentBadge"
+                    Visibility="Collapsed"
+                    Padding="8,4"
+                    Margin="0,0,0,6"
+                    CornerRadius="6"
+                    BorderThickness="1"
+                    BorderBrush="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBorderBrushKey}}"
+                    Background="{DynamicResource {x:Static platformUI:EnvironmentColors.ToolWindowBackgroundBrushKey}}"
+                    HorizontalAlignment="Left">
+                <DockPanel LastChildFill="False">
+                    <TextBlock x:Name="ImageAttachmentText"
+                               VerticalAlignment="Center"
+                               Text="🖼 已附加图片" />
 
-            <TextBox x:Name="QuestionTextBox"
-                     Grid.Column="0"
-                     Style="{StaticResource ChatTextBoxStyle}"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     VerticalScrollBarVisibility="Auto"
-                     MinHeight="56"
-                     MaxHeight="160"
-                     PreviewKeyDown="QuestionTextBox_PreviewKeyDown" />
+                    <Button x:Name="RemoveImageAttachmentButton"
+                            DockPanel.Dock="Right"
+                            Style="{StaticResource ChatButtonStyle}"
+                            Content="×"
+                            Width="22"
+                            Height="22"
+                            Margin="8,0,0,0"
+                            Padding="0"
+                            ToolTip="移除图片"
+                            Click="RemoveImageAttachmentButton_Click" />
+                </DockPanel>
+            </Border>
 
-            <Button x:Name="AskButton"
-                    Grid.Column="1"
-                    Style="{StaticResource ChatButtonStyle}"
-                    Content="发送"
-                    MinWidth="72"
-                    Height="32"
-                    Margin="8,0,0,0"
-                    VerticalAlignment="Bottom"
-                    Click="AskButton_Click" />
-        </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="QuestionTextBox"
+                         Grid.Column="0"
+                         Style="{StaticResource ChatTextBoxStyle}"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         MinHeight="56"
+                         MaxHeight="160"
+                         PreviewKeyDown="QuestionTextBox_PreviewKeyDown" />
+
+                <Button x:Name="AskButton"
+                        Grid.Column="1"
+                        Style="{StaticResource ChatButtonStyle}"
+                        Content="发送"
+                        MinWidth="72"
+                        Height="32"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Bottom"
+                        Click="AskButton_Click" />
+            </Grid>
+        </StackPanel>
     </Grid>
 </UserControl>

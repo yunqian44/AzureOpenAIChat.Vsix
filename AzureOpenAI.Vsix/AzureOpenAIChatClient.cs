@@ -15,7 +15,12 @@ internal static class AzureOpenAIChatClient
 {
     private static readonly HttpClient HttpClient = new HttpClient();
 
-    public static async Task<string> AskAsync(AzureOpenAIConfig config, string prompt, CancellationToken cancellationToken)
+    public static Task<string> AskAsync(AzureOpenAIConfig config, string prompt, CancellationToken cancellationToken)
+    {
+        return AskAsync(config, prompt, imageAttachment: null, cancellationToken);
+    }
+
+    public static async Task<string> AskAsync(AzureOpenAIConfig config, string prompt, ChatImageAttachment? imageAttachment, CancellationToken cancellationToken)
     {
         var preferResponsesApi = string.Equals(config.WireApi, "responses", StringComparison.OrdinalIgnoreCase);
 
@@ -25,22 +30,22 @@ internal static class AzureOpenAIChatClient
 
             if (preferResponsesApi)
             {
-                return await AskByResponsesApiAsync(config, prompt, cts.Token).ConfigureAwait(false);
+                return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
             }
 
             try
             {
-                return await AskByChatCompletionsApiAsync(config, prompt, cts.Token).ConfigureAwait(false);
+                return await AskByChatCompletionsApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
             }
             catch (ApiCallException ex) when (ex.StatusCode == HttpStatusCode.BadRequest && ex.ResponseBody.IndexOf("unsupported", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // 某些部署（例如部分新模型）不支持 chat/completions，自动回退到 responses API。
-                return await AskByResponsesApiAsync(config, prompt, cts.Token).ConfigureAwait(false);
+                return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
             }
         }
     }
 
-    private static async Task<string> AskByChatCompletionsApiAsync(AzureOpenAIConfig config, string prompt, CancellationToken cancellationToken)
+    private static async Task<string> AskByChatCompletionsApiAsync(AzureOpenAIConfig config, string prompt, ChatImageAttachment? imageAttachment, CancellationToken cancellationToken)
     {
         var apiBase = NormalizeToChatCompletionsBase(config.Endpoint);
 
@@ -56,7 +61,11 @@ internal static class AzureOpenAIChatClient
             messages.Add(new ChatMessage { Role = "system", Content = config.SystemPrompt ?? string.Empty });
         }
 
-        messages.Add(new ChatMessage { Role = "user", Content = prompt });
+        messages.Add(new ChatMessage
+        {
+            Role = "user",
+            Content = BuildChatUserContent(prompt, imageAttachment)
+        });
 
         var payload = new ChatCompletionRequest
         {
@@ -78,10 +87,13 @@ internal static class AzureOpenAIChatClient
 
                 if (first.TryGetProperty("message", out var message)
                     && message.ValueKind == JsonValueKind.Object
-                    && message.TryGetProperty("content", out var content)
-                    && content.ValueKind == JsonValueKind.String)
+                    && message.TryGetProperty("content", out var content))
                 {
-                    return content.GetString() ?? string.Empty;
+                    var parsed = ParseContentToPlainText(content);
+                    if (!string.IsNullOrWhiteSpace(parsed))
+                    {
+                        return parsed;
+                    }
                 }
             }
         }
@@ -89,7 +101,7 @@ internal static class AzureOpenAIChatClient
         throw new InvalidOperationException("Azure OpenAI(chat/completions) 返回格式无法识别: " + body);
     }
 
-    private static async Task<string> AskByResponsesApiAsync(AzureOpenAIConfig config, string prompt, CancellationToken cancellationToken)
+    private static async Task<string> AskByResponsesApiAsync(AzureOpenAIConfig config, string prompt, ChatImageAttachment? imageAttachment, CancellationToken cancellationToken)
     {
         var apiBase = NormalizeToResponsesBase(config.Endpoint);
         var requestUrl = apiBase + "/responses";
@@ -97,7 +109,7 @@ internal static class AzureOpenAIChatClient
         var payload = new ResponsesRequest
         {
             Model = config.Deployment,
-            Input = prompt,
+            Input = BuildResponsesInput(prompt, imageAttachment),
             Instructions = string.IsNullOrWhiteSpace(config.SystemPrompt) ? null : config.SystemPrompt,
             Temperature = config.Temperature,
             MaxOutputTokens = config.MaxTokens
@@ -163,6 +175,88 @@ internal static class AzureOpenAIChatClient
         }
 
         throw new InvalidOperationException("Azure OpenAI(responses) 返回格式无法识别: " + body);
+    }
+
+    private static object BuildChatUserContent(string prompt, ChatImageAttachment? imageAttachment)
+    {
+        if (imageAttachment is null)
+        {
+            return prompt ?? string.Empty;
+        }
+
+        var content = new List<object>();
+        if (!string.IsNullOrWhiteSpace(prompt))
+        {
+            content.Add(new ChatTextContentPart { Text = prompt });
+        }
+
+        content.Add(new ChatImageContentPart
+        {
+            ImageUrl = new ChatImageUrl
+            {
+                Url = imageAttachment.ToDataUrl()
+            }
+        });
+
+        return content;
+    }
+
+    private static object BuildResponsesInput(string prompt, ChatImageAttachment? imageAttachment)
+    {
+        if (imageAttachment is null)
+        {
+            return prompt ?? string.Empty;
+        }
+
+        var content = new List<object>();
+        if (!string.IsNullOrWhiteSpace(prompt))
+        {
+            content.Add(new ResponsesInputTextPart { Text = prompt });
+        }
+
+        content.Add(new ResponsesInputImagePart
+        {
+            ImageUrl = imageAttachment.ToDataUrl()
+        });
+
+        return new List<ResponsesInputMessage>
+        {
+            new ResponsesInputMessage
+            {
+                Role = "user",
+                Content = content
+            }
+        };
+    }
+
+    private static string ParseContentToPlainText(JsonElement content)
+    {
+        if (content.ValueKind == JsonValueKind.String)
+        {
+            return content.GetString() ?? string.Empty;
+        }
+
+        if (content.ValueKind == JsonValueKind.Array)
+        {
+            var sb = new StringBuilder();
+            foreach (var part in content.EnumerateArray())
+            {
+                if (part.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                if (part.TryGetProperty("text", out var text)
+                    && text.ValueKind == JsonValueKind.String)
+                {
+                    sb.Append(text.GetString());
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        return string.Empty;
     }
 
     private static async Task<string> PostJsonAsync(string requestUrl, object payload, string apiKey, CancellationToken cancellationToken)
@@ -288,7 +382,31 @@ internal static class AzureOpenAIChatClient
         public string Role { get; set; } = string.Empty;
 
         [JsonPropertyName("content")]
-        public string Content { get; set; } = string.Empty;
+        public object? Content { get; set; }
+    }
+
+    private sealed class ChatTextContentPart
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "text";
+
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private sealed class ChatImageContentPart
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "image_url";
+
+        [JsonPropertyName("image_url")]
+        public ChatImageUrl ImageUrl { get; set; } = new ChatImageUrl();
+    }
+
+    private sealed class ChatImageUrl
+    {
+        [JsonPropertyName("url")]
+        public string Url { get; set; } = string.Empty;
     }
 
     private sealed class ResponsesRequest
@@ -297,7 +415,7 @@ internal static class AzureOpenAIChatClient
         public string Model { get; set; } = string.Empty;
 
         [JsonPropertyName("input")]
-        public string Input { get; set; } = string.Empty;
+        public object Input { get; set; } = string.Empty;
 
         [JsonPropertyName("instructions")]
         public string? Instructions { get; set; }
@@ -307,6 +425,33 @@ internal static class AzureOpenAIChatClient
 
         [JsonPropertyName("max_output_tokens")]
         public int? MaxOutputTokens { get; set; }
+    }
+
+    private sealed class ResponsesInputMessage
+    {
+        [JsonPropertyName("role")]
+        public string Role { get; set; } = string.Empty;
+
+        [JsonPropertyName("content")]
+        public List<object> Content { get; set; } = new List<object>();
+    }
+
+    private sealed class ResponsesInputTextPart
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "input_text";
+
+        [JsonPropertyName("text")]
+        public string Text { get; set; } = string.Empty;
+    }
+
+    private sealed class ResponsesInputImagePart
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "input_image";
+
+        [JsonPropertyName("image_url")]
+        public string ImageUrl { get; set; } = string.Empty;
     }
 
     private sealed class ApiCallException : Exception

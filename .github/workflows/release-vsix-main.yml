@@ -119,7 +119,6 @@ jobs:
             ${{ steps.notes.outputs.body }}
 
             ---
-            发布标签: `${{ steps.meta.outputs.tag }}`
             VSIX 版本: `${{ steps.meta.outputs.version }}`
             构建配置: Release
             分支: main
