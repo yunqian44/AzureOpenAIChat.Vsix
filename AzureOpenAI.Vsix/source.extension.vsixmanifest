@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="AzureOpenAI.Vsix.9a0df5cd71f34b74a8c19df90f5a483a" Version="1.6.2" Language="zh-CN" Publisher="Qian Yun" />
+    <Identity Id="AzureOpenAI.Vsix.9a0df5cd71f34b74a8c19df90f5a483a" Version="1.7" Language="zh-CN" Publisher="Qian Yun" />
     <DisplayName>Azure OpenAI Chat for Visual Studio</DisplayName>
     <Description xml:space="preserve">在 Visual Studio 内调用 Azure OpenAI，并从本地 config.toml 加载配置。</Description>
     <MoreInfo>https://example.local/azure-openai-vsix</MoreInfo>
