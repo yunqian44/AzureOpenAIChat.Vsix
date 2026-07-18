@@ -30,7 +30,14 @@ internal static class AzureOpenAIChatClient
 
             if (preferResponsesApi)
             {
-                return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
+                try
+                {
+                    return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
+                }
+                catch (ApiCallException ex) when (imageAttachment is not null && IsImageInputNotSupportedError(ex))
+                {
+                    throw CreateImageInputNotSupportedException(ex);
+                }
             }
 
             try
@@ -40,9 +47,129 @@ internal static class AzureOpenAIChatClient
             catch (ApiCallException ex) when (ex.StatusCode == HttpStatusCode.BadRequest && ex.ResponseBody.IndexOf("unsupported", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 // 某些部署（例如部分新模型）不支持 chat/completions，自动回退到 responses API。
-                return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
+                try
+                {
+                    return await AskByResponsesApiAsync(config, prompt, imageAttachment, cts.Token).ConfigureAwait(false);
+                }
+                catch (ApiCallException responsesEx) when (imageAttachment is not null && IsImageInputNotSupportedError(responsesEx))
+                {
+                    throw CreateImageInputNotSupportedException(responsesEx);
+                }
+            }
+            catch (ApiCallException ex) when (imageAttachment is not null && IsImageInputNotSupportedError(ex))
+            {
+                throw CreateImageInputNotSupportedException(ex);
             }
         }
+    }
+
+    private static bool IsImageInputNotSupportedError(ApiCallException ex)
+    {
+        var statusCode = (int)ex.StatusCode;
+        if (ex.StatusCode != HttpStatusCode.BadRequest
+            && statusCode != 415
+            && statusCode != 422)
+        {
+            return false;
+        }
+
+        var body = (ex.ResponseBody ?? string.Empty).ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return false;
+        }
+
+        var imageHints = new[]
+        {
+            "image",
+            "image_url",
+            "input_image",
+            "vision",
+            "multimodal",
+            "图片"
+        };
+
+        var unsupportedHints = new[]
+        {
+            "unsupported",
+            "not support",
+            "not supported",
+            "does not support",
+            "only supports text",
+            "text-only",
+            "不支持"
+        };
+
+        var hasImageHint = false;
+        foreach (var hint in imageHints)
+        {
+            if (body.Contains(hint))
+            {
+                hasImageHint = true;
+                break;
+            }
+        }
+
+        if (!hasImageHint)
+        {
+            return false;
+        }
+
+        foreach (var hint in unsupportedHints)
+        {
+            if (body.Contains(hint))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static ImageInputNotSupportedException CreateImageInputNotSupportedException(ApiCallException ex)
+    {
+        var serverMessage = TryExtractApiErrorMessage(ex.ResponseBody);
+        var message = "当前模型部署不支持图片输入。请移除图片后重试，或切换到支持视觉/多模态输入的部署。";
+        if (!string.IsNullOrWhiteSpace(serverMessage))
+        {
+            message += Environment.NewLine + "服务端提示：" + serverMessage;
+        }
+
+        return new ImageInputNotSupportedException(message, ex);
+    }
+
+    private static string TryExtractApiErrorMessage(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using (var doc = JsonDocument.Parse(responseBody))
+            {
+                if (doc.RootElement.TryGetProperty("error", out var error)
+                    && error.ValueKind == JsonValueKind.Object
+                    && error.TryGetProperty("message", out var message)
+                    && message.ValueKind == JsonValueKind.String)
+                {
+                    return message.GetString() ?? string.Empty;
+                }
+            }
+        }
+        catch
+        {
+            // ignore parse errors
+        }
+
+        var compact = responseBody.Replace("\r", " ").Replace("\n", " ").Trim();
+        if (compact.Length > 180)
+        {
+            compact = compact.Substring(0, 180) + "...";
+        }
+
+        return compact;
     }
 
     private static async Task<string> AskByChatCompletionsApiAsync(AzureOpenAIConfig config, string prompt, ChatImageAttachment? imageAttachment, CancellationToken cancellationToken)
@@ -452,6 +579,13 @@ internal static class AzureOpenAIChatClient
 
         [JsonPropertyName("image_url")]
         public string ImageUrl { get; set; } = string.Empty;
+    }
+
+    internal sealed class ImageInputNotSupportedException : Exception
+    {
+        public ImageInputNotSupportedException(string message, Exception? innerException = null) : base(message, innerException)
+        {
+        }
     }
 
     private sealed class ApiCallException : Exception

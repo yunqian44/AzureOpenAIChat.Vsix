@@ -167,6 +167,21 @@ public partial class ChatToolWindowControl : UserControl
                     : "状态：AI 命令执行结束（存在错误或超时）。";
             }
         }
+        catch (AzureOpenAIChatClient.ImageInputNotSupportedException ex)
+        {
+            var friendlyMessage = ex.Message;
+
+            if (thinkingBubble is not null)
+            {
+                CompleteThinkingBubble(thinkingBubble, friendlyMessage, isError: true);
+            }
+            else
+            {
+                AppendMessage(friendlyMessage, isUser: false, isError: true);
+            }
+
+            StatusText.Text = "状态：当前模型不支持图片输入。";
+        }
         catch (Exception ex)
         {
             if (thinkingBubble is not null)

@@ -1,6 +1,18 @@
-﻿param(
-    [string]$VsInstance = '18.0_2a3f3b4b'
-)
+﻿$vsRoot = Join-Path $env:LOCALAPPDATA "Microsoft\VisualStudio"
+$inst = Get-ChildItem $vsRoot -Directory |
+  Where-Object { $_.Name -like '18.0_*Exp' } |
+  Sort-Object LastWriteTime -Descending |
+  Select-Object -First 1
+
+if (-not $inst) {
+  $inst = Get-ChildItem $vsRoot -Directory |
+    Where-Object { $_.Name -like '18.0_*' -and $_.Name -notlike '*Exp*' } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+}
+if (-not $inst) { Write-Host "未找到 VS2026 实例目录"; exit 1 }
+
+$vsInstance = $inst.Name
 
 $logPath = Join-Path $env:APPDATA "Microsoft\VisualStudio\$VsInstance\ActivityLog.xml"
 if (-not (Test-Path $logPath)) {
