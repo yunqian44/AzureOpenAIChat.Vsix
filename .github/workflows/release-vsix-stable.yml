@@ -135,19 +135,18 @@ jobs:
         with:
           tag_name: ${{ env.STABLE_TAG }}
           target_commitish: ${{ github.sha }}
-          name: Azure OpenAI Chat VSIX Stable
+          name: Azure OpenAI Chat ${{ steps.meta.outputs.version }}
           body: |
             ${{ steps.notes.outputs.body }}
 
             ---
-            Stable 标签: `${{ env.STABLE_TAG }}`（每次 main 推送覆盖）
             VSIX 版本: `${{ steps.meta.outputs.version }}`
             构建配置: Release
             分支: main
-            触发提交: ${{ github.sha }}
           draft: false
           prerelease: false
           make_latest: true
           overwrite_files: true
           files: |
             ${{ env.VSIX_PATH }}
+
