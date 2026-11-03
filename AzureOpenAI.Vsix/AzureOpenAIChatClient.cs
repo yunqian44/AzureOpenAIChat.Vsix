@@ -467,7 +467,9 @@ internal static class AzureOpenAIChatClient
         var deploymentsIndex = normalized.IndexOf(deploymentsMarker, StringComparison.OrdinalIgnoreCase);
         if (deploymentsIndex >= 0)
         {
-            return normalized.Substring(0, deploymentsIndex + "/openai/v1".Length);
+            // 例如 https://x.openai.azure.com/openai/deployments/gpt/chat/completions
+            // 应归一化为 https://x.openai.azure.com/openai/v1
+            return normalized.Substring(0, deploymentsIndex) + "/openai/v1";
         }
 
         if (normalized.EndsWith("/openai", StringComparison.OrdinalIgnoreCase))

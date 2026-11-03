@@ -150,11 +150,19 @@ public partial class ChatToolWindowControl : UserControl
 
             if (TryExtractShellCommandFromAssistantAnswer(answer, out var aiCommand, out var source))
             {
+                // 安全：AI 返回的命令必须经用户确认后才执行，默认按钮为“否”。
+                if (!ConfirmExecuteAiCommand(aiCommand!, source))
+                {
+                    AppendMessage("检测到 AI 返回的命令，已按你的选择跳过执行。" + Environment.NewLine + "命令:" + Environment.NewLine + aiCommand, isUser: false);
+                    StatusText.Text = "状态：请求完成（已跳过 AI 返回命令）。";
+                    return;
+                }
+
                 var autoExecBubble = AppendThinkingBubble("正在执行 AI 返回命令");
                 var execResult = await ShellCommandExecutor.ExecuteAsync(aiCommand!, timeoutSeconds: 180, CancellationToken.None, sourceHint: source).ConfigureAwait(true);
 
                 var summary = new StringBuilder();
-                summary.AppendLine("检测到 AI 返回可执行命令并已自动执行。");
+                summary.AppendLine("检测到 AI 返回可执行命令，已经你确认后执行。");
                 summary.AppendLine($"来源: {source}");
                 summary.AppendLine("命令:");
                 summary.AppendLine(aiCommand);
@@ -406,6 +414,27 @@ private async Task ReloadConfigAsync()
         border.SetResourceReference(Border.BorderBrushProperty, EnvironmentColors.ToolWindowBorderBrushKey);
         border.SetResourceReference(Border.BackgroundProperty, EnvironmentColors.ToolWindowBackgroundBrushKey);
         border.Opacity = 1.0;
+    }
+
+    private bool ConfirmExecuteAiCommand(string command, string source)
+    {
+        const int maxPreviewChars = 2000;
+        var preview = command.Length > maxPreviewChars
+            ? command.Substring(0, maxPreviewChars) + Environment.NewLine + $"...（已截断，原始长度 {command.Length} 字符）"
+            : command;
+
+        var message = "AI 回复中包含以下可执行命令，是否在本机执行？" + Environment.NewLine
+            + $"来源: {source}" + Environment.NewLine + Environment.NewLine
+            + preview + Environment.NewLine + Environment.NewLine
+            + "请确认命令内容安全后再选择“是”。";
+
+        const string caption = "Azure OpenAI Chat - 确认执行命令";
+        var owner = System.Windows.Window.GetWindow(this);
+        var result = owner is not null
+            ? System.Windows.MessageBox.Show(owner, message, caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No)
+            : System.Windows.MessageBox.Show(message, caption, MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+
+        return result == MessageBoxResult.Yes;
     }
 
     private static bool TryParseShellCommand(string prompt, out string? command)

@@ -1,7 +1,9 @@
 {
   "profiles": {
     "AzureOpenAI.Vsix": {
-      "commandName": "VsixDebugger"
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Microsoft Visual Studio\\18\\Insiders\\Common7\\IDE\\devenv.exe",
+      "commandLineArgs": "/rootsuffix Exp"
     }
   }
 }
